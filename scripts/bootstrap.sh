@@ -18,41 +18,47 @@ if [ ! -f "$CONFIG_FILE" ]; then
 
 cat >"$CONFIG_FILE" <<EOF
 {
-  "gateway": {
-    "port": 18789,
-    "mode": "local",
-    "bind": "lan",
-    "auth": {
-      "mode": "token",
-      "token": "$TOKEN"
-    },
-    "controlUi":{
-        "enabled": true
-    },
-    "trustedProxies": [
-      "*"
-    ],
-    "tailscale": {
-      "mode": "off",
-      "resetOnExit": false
+  "meta": {
+    "lastTouchedVersion": "2026.1.25",
+    "lastTouchedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+  },
+  "wizard": {
+    "lastRunMode": "local"
+  },
+  "diagnostics": {
+    "otel": {
+      "enabled": true
     }
   },
-  "skills": {
-    "install": {
-      "nodeManager": "npm",
-      "preferBrew": false
+  "update": {
+    "channel": "stable"
+  },
+  "agents": {
+    "defaults": {
+      "workspace": "/home/node/clawd",
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
     }
   },
-  "channels": {
-    "imessage": {
-      "enabled": false
+  "tools": {
+    "agentToAgent": {
+      "allow": []
     }
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions"
   },
   "commands": {
     "native": "auto",
     "nativeSkills": "auto"
   },
   "hooks": {
+    "enabled": true,
     "internal": {
       "enabled": true,
       "entries": {
@@ -68,16 +74,30 @@ cat >"$CONFIG_FILE" <<EOF
       }
     }
   },
-  "agents": {
-    "defaults": {
-      "workspace": "/home/node/clawd",
-      "compaction": {
-        "mode": "safeguard"
-      },
-      "maxConcurrent": 4,
-      "subagents": {
-        "maxConcurrent": 8
-      }
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "auto",
+    "controlUi": {
+      "enabled": true,
+      "allowInsecureAuth": false
+    },
+    "auth": {
+      "mode": "token",
+      "token": "$TOKEN"
+    },
+    "trustedProxies": [
+      "*"
+    ],
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "skills": {
+    "allowBundled": [],
+    "install": {
+      "nodeManager": "npm"
     }
   }
 }
