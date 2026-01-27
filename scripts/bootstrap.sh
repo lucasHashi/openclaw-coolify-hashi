@@ -23,7 +23,10 @@ cat >"$CONFIG_FILE" <<EOF
     "lastTouchedAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
   },
   "wizard": {
-    "lastRunMode": "local"
+    "lastRunMode": "local",
+    "lastRunAt": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "lastRunVersion": "2026.1.25",
+    "lastRunCommand": "doctor"
   },
   "diagnostics": {
     "otel": {
@@ -132,6 +135,31 @@ cat >"$CONFIG_FILE" <<EOF
     "allowBundled": [],
     "install": {
       "nodeManager": "npm"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      },
+      "whatsapp": {
+        "enabled": true
+      },
+      "discord": {
+        "enabled": true
+      },
+      "googlechat": {
+        "enabled": true
+      },
+      "slack": {
+        "enabled": true
+      },
+      "signal": {
+        "enabled": true
+      },
+      "imessage": {
+        "enabled": true
+      }
     }
   }
 }
