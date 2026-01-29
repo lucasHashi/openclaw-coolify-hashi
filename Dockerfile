@@ -29,6 +29,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     imagemagick \
     graphviz \
     sqlite3 \
+    # Security: Bitwarden CLI (rbw) & Pass
+    rbw \
+    pass \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Cloudflare Tunnel (cloudflared)

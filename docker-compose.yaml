@@ -89,7 +89,19 @@ services:
     volumes:
       - qdrant-data:/qdrant/storage
 
+  linkding:
+    image: sissbruecker/linkding:latest
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - linkding-data:/etc/linkding/data
+    environment:
+      - LD_DISABLE_BACKGROUND_TASKS=False
+      - LD_DISABLE_URL_VALIDATION=False
+
 volumes:
   moltbot-config:
   moltbot-workspace:
   qdrant-data:
+  linkding-data:

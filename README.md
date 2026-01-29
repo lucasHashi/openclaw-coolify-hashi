@@ -21,9 +21,15 @@ Think of this Docker container not as an app, but as an **Office Building**.
 Your office never forgets, thanks to a 3-tier memory architecture:
 *   **The Filing Cabinet (`moltbot-workspace`)**: A persistent Docker Volume where agents write code, save files, and store heavy data. Survives restarts.
 *   **The Brain (Internal SQLite)**: Moltbot's native transactional memory for conversations and facts.
-*   **The Library (Qdrant)**: A dedicated Vector Database service (`qdrant:6333`) for building advanced RAG (Retrieval Augmented Generation) apps.
+*   **The Library (Qdrant)**: A dedicated Vector Database (`qdrant:6333`) for advanced RAG.
+*   **The Archive (Linkding)**: A self-hosted bookmark manager (`linkding:9090`) to save important research, docs, and links.
 
-### 3. The Public Front Door (Cloudflare Tunnel)
+### 3. The Security Vault
+Your agent can securely manage credentials without leaking them:
+*   **Bitwarden (`rbw`)**: Securely fetch secrets from your Bitwarden vault.
+*   **Pass**: Local GPG-encrypted password storage for the agent's exclusive use.
+
+### 4. The Public Front Door (Cloudflare Tunnel)
 Need to show a client your work?
 *   The agent can start a web server (e.g., Next.js on port 3000).
 *   It uses `cloudflared` to instantly create a **secure public URL** (e.g., `https://project-viz.trycloudflare.com`).
