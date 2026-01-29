@@ -1,6 +1,9 @@
 services:
   moltbot:
-    build: .
+    build:
+      context: .
+      args:
+        - CLAWDBOT_BETA=${CLAWDBOT_BETA:-0}
     user: 'node'
     restart: on-failure:3
     ulimits:
@@ -57,6 +60,8 @@ services:
       VERCEL_TOKEN: ${VERCEL_TOKEN}
       GITHUB_TOKEN: ${GITHUB_TOKEN}
       GITHUB_USERNAME: ${GITHUB_USERNAME}
+      # Optional
+      MOLT_BOT_BETA: ${MOLT_BOT_BETA:-false}
 
     volumes:
       - moltbot-config:/home/node/.moltbot

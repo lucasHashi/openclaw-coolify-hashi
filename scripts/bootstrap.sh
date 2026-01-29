@@ -218,6 +218,9 @@ BASE_URL="${SERVICE_URL_MOLTBOT_18789:-${SERVICE_FQDN_MOLTBOT:+https://$SERVICE_
 BASE_URL="${BASE_URL:-http://localhost:18789}"
 
 if [ "${CLAWDBOT_PRINT_ACCESS:-1}" = "1" ]; then
+  if [ "${CLAWDBOT_BETA:-0}" = "1" ]; then
+    echo "🧪 MOLTBOT BETA MODE ACTIVE"
+  fi
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "🦞 MOLTBOT READY"
