@@ -368,6 +368,13 @@ if [ -z "$TOKEN" ]; then
   TOKEN="$(jq -r '.gateway.auth.token' "$CONFIG_FILE" 2>/dev/null || jq -r '.gateway.auth.token' "$OPENCLAW_STATE/openclaw.json" 2>/dev/null || echo "")"
 fi
 
+# Force fix version mismatch in existing config (stops "newer version" warnings)
+if [ -f "$CONFIG_FILE" ]; then
+  # Use temp file to avoid race conditions or partial writes
+  sed 's/"lastTouchedVersion": ".*"/"lastTouchedVersion": "2026.1.29"/' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+  sed 's/"lastRunVersion": ".*"/"lastRunVersion": "2026.1.29"/' "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+fi
+
 # Ensure all possible naming variations exist on every boot for robustness
 cp -f "$CONFIG_FILE" "$MOLT_STATE/clawdbot.json" 2>/dev/null || true
 cp -f "$CONFIG_FILE" "$MOLT_STATE/moltbot.json" 2>/dev/null || true
