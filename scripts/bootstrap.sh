@@ -247,9 +247,7 @@ cat >"$CONFIG_FILE" <<EOF
       "sandbox": {
         "mode": "non-main",
         "scope": "session",
-        "docker": {
-          "host": "${DOCKER_HOST:-tcp://docker-proxy:2375}"
-        },
+
         "browser": {
           "enabled": true
         }
