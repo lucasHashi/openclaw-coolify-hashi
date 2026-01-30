@@ -469,21 +469,22 @@ if [ "${OPENCLAW_PRINT_ACCESS:-1}" = "1" ]; then
   echo ""
 fi
 
-# Cloudflare Tunnel Status
+# Cloudflare Tunnel Auto-Start
 if [ -n "$CF_TUNNEL_TOKEN" ]; then
+    echo "🚇 Starting Cloudflare Tunnel..."
     if command -v cloudflared >/dev/null; then
+        # Run in background, output to log
         cloudflared tunnel run --token "$CF_TUNNEL_TOKEN" > /var/log/cloudflared.log 2>&1 &
-        echo "🚇 Custom Cloudflare Tunnel: ACTIVE (Serving on your private domain)"
+        echo "✅ Cloudflare Tunnel active."
     else
-        echo "⚠️ Cloudflared binary missing. Tunnel skipped."
+        echo "⚠️ CF_TUNNEL_TOKEN set but 'cloudflared' binary missing."
     fi
-else
-    echo "🌐 Public Access: Using Default Coolify Proxy."
-    echo "   (Tip: Set CF_TUNNEL_TOKEN to use your own custom domain)"
 fi
 
 # Run the openclaw gateway using the global binary
 exec openclaw gateway
 
-# If you want to set up custom model and with custom API key, you can run this command first:
-# exec openclaw onboard
+echo ""
+echo "💡 If you want to set up custom model and with custom API key, you can run this command first:"
+echo "   exec openclaw onboard"
+echo ""
