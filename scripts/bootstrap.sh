@@ -10,6 +10,33 @@ CONFIG_FILE="$OPENCLAW_STATE/openclaw.json"
 WORKSPACE_DIR="${OPENCLAW_WORKSPACE:-/data/openclaw-workspace}"
 
 mkdir -p "$OPENCLAW_STATE" "$WORKSPACE_DIR"
+
+# Ensure mcporter config in persistent workspace
+mkdir -p "$WORKSPACE_DIR/config"
+if [ ! -f "$WORKSPACE_DIR/config/mcporter.json" ]; then
+cat > "$WORKSPACE_DIR/config/mcporter.json" <<'EOM'
+{
+  "mcpServers": {
+    "clickup_alt": {
+      "command": "npx",
+      "args": ["-y", "clickup-mcp-server"],
+      "env": {
+        "CLICKUP_API_TOKEN": "${CLICKUP_API_TOKEN}"
+      }
+    }
+  }
+}
+EOM
+fi
+
+if [ -z "${CLICKUP_API_TOKEN:-}" ]; then
+  echo "[bootstrap] WARNING: CLICKUP_API_TOKEN nao esta setado"
+fi
+
+touch /root/.ssh/known_hosts
+ssh-keyscan github.com >> /root/.ssh/known_hosts 2>/dev/null || true
+chmod 644 /root/.ssh/known_hosts
+
 chmod 700 "$OPENCLAW_STATE"
 
 mkdir -p "$OPENCLAW_STATE/credentials"
