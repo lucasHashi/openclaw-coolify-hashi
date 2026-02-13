@@ -10,6 +10,19 @@ CONFIG_FILE="$OPENCLAW_STATE/openclaw.json"
 WORKSPACE_DIR="${OPENCLAW_WORKSPACE:-/data/openclaw-workspace}"
 
 mkdir -p "$OPENCLAW_STATE" "$WORKSPACE_DIR"
+chmod 700 "$OPENCLAW_STATE"
+
+# ----------------------------
+# Ensure base tools exist (best-effort)
+# ----------------------------
+command -v ssh >/dev/null 2>&1 || (apt update && apt install -y openssh-client git)
+command -v git >/dev/null 2>&1 || (apt update && apt install -y git)
+command -v node >/dev/null 2>&1 || (apt update && apt install -y nodejs npm)
+command -v npm >/dev/null 2>&1 || (apt update && apt install -y nodejs npm)
+
+# Ensure mcporter exists (optional but recommended for MCP)
+command -v mcporter >/dev/null 2>&1 || npm i -g mcporter
+
 
 # Ensure mcporter config in persistent workspace
 mkdir -p "$WORKSPACE_DIR/config"
@@ -33,11 +46,6 @@ if [ -z "${CLICKUP_API_TOKEN:-}" ]; then
   echo "[bootstrap] WARNING: CLICKUP_API_TOKEN nao esta setado"
 fi
 
-touch /root/.ssh/known_hosts
-ssh-keyscan github.com >> /root/.ssh/known_hosts 2>/dev/null || true
-chmod 644 /root/.ssh/known_hosts
-
-chmod 700 "$OPENCLAW_STATE"
 
 mkdir -p "$OPENCLAW_STATE/credentials"
 mkdir -p "$OPENCLAW_STATE/agents/main/sessions"
@@ -48,6 +56,16 @@ for dir in .agents .ssh .config .local .cache .npm .bun .claude .kimi; do
         ln -sf "/data/$dir" "/root/$dir"
     fi
 done
+
+# ----------------------------
+# GitHub SSH known_hosts (after /root/.ssh symlink exists)
+# ----------------------------
+mkdir -p /root/.ssh
+touch /root/.ssh/known_hosts
+ssh-keyscan github.com >> /root/.ssh/known_hosts 2>/dev/null || true
+chmod 644 /root/.ssh/known_hosts    
+
+
 
 # ----------------------------
 # Seed Agent Workspaces
