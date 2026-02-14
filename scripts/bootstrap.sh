@@ -15,16 +15,17 @@ chmod 700 "$OPENCLAW_STATE"
 # ----------------------------
 # Ensure base tools exist (best-effort)
 # ----------------------------
+# NOTE: This is the pragmatic fix for containers rebuilt on redeploy.
+# For a cleaner approach, bake these into the image.
 command -v ssh >/dev/null 2>&1 || (apt update && apt install -y openssh-client git)
 command -v git >/dev/null 2>&1 || (apt update && apt install -y git)
 command -v node >/dev/null 2>&1 || (apt update && apt install -y nodejs npm)
 command -v npm >/dev/null 2>&1 || (apt update && apt install -y nodejs npm)
-
-# Ensure mcporter exists (optional but recommended for MCP)
 command -v mcporter >/dev/null 2>&1 || npm i -g mcporter
 
-
+# ----------------------------
 # Ensure mcporter config in persistent workspace
+# ----------------------------
 mkdir -p "$WORKSPACE_DIR/config"
 if [ ! -f "$WORKSPACE_DIR/config/mcporter.json" ]; then
 cat > "$WORKSPACE_DIR/config/mcporter.json" <<'EOM'
@@ -46,26 +47,40 @@ if [ -z "${CLICKUP_API_TOKEN:-}" ]; then
   echo "[bootstrap] WARNING: CLICKUP_API_TOKEN nao esta setado"
 fi
 
-
 mkdir -p "$OPENCLAW_STATE/credentials"
 mkdir -p "$OPENCLAW_STATE/agents/main/sessions"
 chmod 700 "$OPENCLAW_STATE/credentials"
 
+# ----------------------------
+# Symlink user dirs to /data (persistent)
+# ----------------------------
 for dir in .agents .ssh .config .local .cache .npm .bun .claude .kimi; do
     if [ ! -L "/root/$dir" ] && [ ! -e "/root/$dir" ]; then
         ln -sf "/data/$dir" "/root/$dir"
     fi
 done
 
-# ----------------------------
+# Force /root/.ssh to always be a symlink to persistent /data/.ssh
+mkdir -p /data/.ssh
+rm -rf /root/.ssh
+ln -sf /data/.ssh /root/.ssh
+chmod 700 /data/.ssh
+
 # GitHub SSH known_hosts (after /root/.ssh symlink exists)
-# ----------------------------
-mkdir -p /root/.ssh
 touch /root/.ssh/known_hosts
 ssh-keyscan github.com >> /root/.ssh/known_hosts 2>/dev/null || true
-chmod 644 /root/.ssh/known_hosts    
+chmod 644 /root/.ssh/known_hosts
 
-
+# Provide a minimal ssh config if missing
+if [ ! -f /root/.ssh/config ]; then
+cat > /root/.ssh/config <<'EOF'
+Host github.com
+  HostName github.com
+  User git
+  IdentitiesOnly yes
+EOF
+chmod 600 /root/.ssh/config
+fi
 
 # ----------------------------
 # Seed Agent Workspaces
@@ -211,10 +226,10 @@ if [ -f scripts/recover_sandbox.sh ]; then
   cp scripts/recover_sandbox.sh "$WORKSPACE_DIR/"
   cp scripts/monitor_sandbox.sh "$WORKSPACE_DIR/"
   chmod +x "$WORKSPACE_DIR/recover_sandbox.sh" "$WORKSPACE_DIR/monitor_sandbox.sh"
-  
+
   # Run initial recovery
   bash "$WORKSPACE_DIR/recover_sandbox.sh"
-  
+
   # Start background monitor
   nohup bash "$WORKSPACE_DIR/monitor_sandbox.sh" >/dev/null 2>&1 &
 fi
@@ -223,6 +238,7 @@ fi
 # Run OpenClaw
 # ----------------------------
 ulimit -n 65535
+
 # ----------------------------
 # Banner & Access Info
 # ----------------------------
