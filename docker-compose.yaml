@@ -23,7 +23,6 @@ services:
       DOCKER_HOST: tcp://docker-proxy:2375
       OPENCLAW_ENABLE_WEBHOOK_PROXY: "1"
 
-      # ✅ Porta configurável por instância (Coolify env var)
       OPENCLAW_GATEWAY_PORT: ${OPENCLAW_GATEWAY_PORT:-18789}
       PORT: ${OPENCLAW_GATEWAY_PORT:-18789}
 
@@ -32,7 +31,6 @@ services:
       HOME: /data
       TERM: xterm-256color
 
-      # Persistence: Command History
       HISTFILE: /data/.bash_history
       HISTSIZE: 50000
       HISTSAVE: 50000
@@ -44,14 +42,10 @@ services:
       NPM_CONFIG_CACHE: /data/.npm
       BUN_INSTALL: /data/.bun
 
-      # Map OpenClaw vars
       OPENCLAW_GATEWAY_BIND: lan
-
-      # Tell the binary where to look for state/config
       OPENCLAW_STATE_DIR: /data/.openclaw
       OPENCLAW_WORKSPACE: /root/openclaw-workspace
 
-      # API Keys injected from .env or Coolify
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       MINIMAX_API_KEY: ${MINIMAX_API_KEY}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
@@ -62,27 +56,20 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
       SANDBOX_CONTAINER: ${SANDBOX_CONTAINER:-false}
 
-      # Optional integrations
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
       NANOBANANA_API_KEY: ${NANOBANANA_API_KEY}
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
 
-      SERVICE_URL_OPENCLAW_18789: null
-      SERVICE_URL_OPENCLAWWEBHOOK_8788: null
       BASE_URL: "https://${SERVICE_FQDN_OPENCLAW}"
       PUBLIC_URL: "https://${SERVICE_FQDN_OPENCLAW}"
 
-      # Bootstrap controls
       OPENCLAW_AUTO_BOOTSTRAP: "1"
       OPENCLAW_PRINT_ACCESS: "1"
       GATEWAY_TRUSTED_PROXIES: "*"
-
-      # Fix for EMFILE/Inotify issues in Docker
       CHOKIDAR_USEPOLLING: "true"
 
       CF_TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
 
-      # Deployment & Git
       VERCEL_ORG_ID: ${VERCEL_ORG_ID}
       VERCEL_PROJECT_ID: ${VERCEL_PROJECT_ID}
       VERCEL_TOKEN: ${VERCEL_TOKEN}
@@ -102,9 +89,8 @@ services:
 
     command: ["bash", "/app/scripts/bootstrap.sh"]
 
-    # ✅ Healthcheck segue a porta configurada (usa $$ para variável do container)
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:$$OPENCLAW_GATEWAY_PORT/ >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:$$OPENCLAW_GATEWAY_PORT/ >/dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -124,7 +110,6 @@ services:
       VERSION: 1
       EXEC: 1
       EVENTS: 1
-    # A ideia desse proxy é exatamente “bloquear” APIs do Docker por env vars. :contentReference[oaicite:2]{index=2}
 
   searxng:
     build:
