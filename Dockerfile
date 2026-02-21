@@ -83,8 +83,14 @@ ENV BUN_INSTALL_NODE=0 \
     BUN_INSTALL="/data/.bun" \
     PATH="/usr/local/go/bin:/data/.bun/bin:/data/.bun/install/global/bin:$PATH"
 
-# Install Bun
-RUN curl -fsSL https://bun.sh/install | bash
+# Install Bun (garantido)
+RUN mkdir -p /data/.bun && \
+    curl -fsSL https://bun.sh/install | bash && \
+    # garante que o bun existe onde esperamos
+    test -x /data/.bun/bin/bun && /data/.bun/bin/bun --version && \
+    # garante que "bun" sempre estará no PATH nos próximos stages
+    ln -sf /data/.bun/bin/bun /usr/local/bin/bun && \
+    bun --version
 
 # Python tools
 RUN pip3 install ipython csvkit openpyxl python-docx pypdf botasaurus browser-use playwright --break-system-packages && \
