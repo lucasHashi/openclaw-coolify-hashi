@@ -106,6 +106,29 @@ ENV OPENCLAW_BETA=${OPENCLAW_BETA} \
     OPENCLAW_NO_ONBOARD=1 \
     NPM_CONFIG_UNSAFE_PERM=true
 
+# ✅ GARANTIA DO BUN (evita exit 127)
+ENV BUN_INSTALL="/data/.bun" \
+    PATH="/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin:/data/.bun/bin:/data/.bun/install/global/bin:$PATH"
+
+# Se por qualquer motivo o bun não estiver disponível, instala um binário em /usr/local/bin
+RUN if ! command -v bun >/dev/null 2>&1; then \
+      echo "bun not found in PATH. Installing bun binary..."; \
+      ARCH="$(uname -m)"; \
+      case "$ARCH" in \
+        x86_64|amd64) BUN_ARCH="x64" ;; \
+        aarch64|arm64) BUN_ARCH="aarch64" ;; \
+        *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
+      esac; \
+      curl -fsSL "https://github.com/oven-sh/bun/releases/latest/download/bun-linux-${BUN_ARCH}.zip" -o /tmp/bun.zip; \
+      apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*; \
+      unzip /tmp/bun.zip -d /tmp/bun; \
+      # o zip normalmente vem com binário em /tmp/bun/bun-linux-*/bun
+      BUN_BIN="$(find /tmp/bun -type f -name bun -perm -111 | head -n 1)"; \
+      if [ -z "$BUN_BIN" ]; then echo "Could not locate bun binary in zip" && exit 1; fi; \
+      install -m 0755 "$BUN_BIN" /usr/local/bin/bun; \
+      rm -rf /tmp/bun /tmp/bun.zip; \
+    fi && bun --version
+
 # Install Vercel, Marp, QMD with BuildKit cache mount for faster rebuilds
 RUN --mount=type=cache,target=/data/.bun/install/cache \
     bun install -g vercel @marp-team/marp-cli https://github.com/tobi/qmd && hash -r && \
