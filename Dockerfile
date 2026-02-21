@@ -106,17 +106,14 @@ RUN ln -s /usr/bin/fdfind /usr/bin/fd || true && \
 # Stage 4: Application dependencies (package installations)
 FROM runtimes AS dependencies
 
-# OpenClaw install
 ARG OPENCLAW_BETA=false
 ENV OPENCLAW_BETA=${OPENCLAW_BETA} \
     OPENCLAW_NO_ONBOARD=1 \
     NPM_CONFIG_UNSAFE_PERM=true
 
-# ✅ GARANTIA DO BUN (evita exit 127)
 ENV BUN_INSTALL="/data/.bun" \
     PATH="/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin:/data/.bun/bin:/data/.bun/install/global/bin:$PATH"
 
-# Se por qualquer motivo o bun não estiver disponível, instala um binário em /usr/local/bin
 RUN if ! command -v bun >/dev/null 2>&1; then \
       echo "bun not found in PATH. Installing bun binary..."; \
       ARCH="$(uname -m)"; \
@@ -128,18 +125,24 @@ RUN if ! command -v bun >/dev/null 2>&1; then \
       curl -fsSL "https://github.com/oven-sh/bun/releases/latest/download/bun-linux-${BUN_ARCH}.zip" -o /tmp/bun.zip; \
       apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*; \
       unzip /tmp/bun.zip -d /tmp/bun; \
-      # o zip normalmente vem com binário em /tmp/bun/bun-linux-*/bun
       BUN_BIN="$(find /tmp/bun -type f -name bun -perm -111 | head -n 1)"; \
       if [ -z "$BUN_BIN" ]; then echo "Could not locate bun binary in zip" && exit 1; fi; \
       install -m 0755 "$BUN_BIN" /usr/local/bin/bun; \
       rm -rf /tmp/bun /tmp/bun.zip; \
-    fi && bun --version
+    fi
 
-# Install Vercel, Marp, QMD with BuildKit cache mount for faster rebuilds
+# ✅ diagnóstico obrigatório (vai aparecer no log do Coolify)
+RUN set -eux; \
+    echo "PATH=$PATH"; \
+    ls -la /usr/local/bin/bun || true; \
+    ls -la /data/.bun/bin/bun || true; \
+    /usr/local/bin/bun --version
+
+# ✅ usa bun por caminho absoluto (mata o 127)
 RUN --mount=type=cache,target=/data/.bun/install/cache \
-    bun install -g vercel @marp-team/marp-cli https://github.com/tobi/qmd && hash -r && \
-    bun pm -g untrusted && \
-    bun install -g @openai/codex @google/gemini-cli opencode-ai @steipete/summarize @hyperbrowser/agent clawhub
+    /usr/local/bin/bun install -g vercel @marp-team/marp-cli https://github.com/tobi/qmd && hash -r && \
+    /usr/local/bin/bun pm -g untrusted && \
+    /usr/local/bin/bun install -g @openai/codex @google/gemini-cli opencode-ai @steipete/summarize @hyperbrowser/agent clawhub
 
 # Install OpenClaw with npm cache mount
 RUN --mount=type=cache,target=/data/.npm \
