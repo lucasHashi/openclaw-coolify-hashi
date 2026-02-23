@@ -138,8 +138,9 @@ RUN --mount=type=cache,target=/data/.npm \
 RUN --mount=type=cache,target=/data/.npm \
     npm install -g @marp-team/marp-cli --no-audit --no-fund
 
-RUN --mount=type=cache,target=/data/.npm \
-    npm install -g https://github.com/tobi/qmd --no-audit --no-fund
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    go install github.com/tobi/qmd@latest && \
+    ln -sf /root/go/bin/qmd /usr/local/bin/qmd
 
 RUN --mount=type=cache,target=/data/.npm \
     npm install -g clawhub --no-audit --no-fund
