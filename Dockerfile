@@ -131,9 +131,18 @@ RUN set -eux; \
     ls -la /data/.bun/bin/bun || true; \
     /usr/local/bin/bun --version
 
-# Instalando as utilidades globais essenciais (usando npm para maior estabilidade)
+# Instalando as utilidades globais essenciais (usando npm, divididas para não sobrecarregar a memória da VPS)
 RUN --mount=type=cache,target=/data/.npm \
-    npm install -g vercel @marp-team/marp-cli https://github.com/tobi/qmd clawhub
+    npm install -g vercel --no-audit --no-fund
+
+RUN --mount=type=cache,target=/data/.npm \
+    npm install -g @marp-team/marp-cli --no-audit --no-fund
+
+RUN --mount=type=cache,target=/data/.npm \
+    npm install -g https://github.com/tobi/qmd --no-audit --no-fund
+
+RUN --mount=type=cache,target=/data/.npm \
+    npm install -g clawhub --no-audit --no-fund
 
 # Install OpenClaw with npm cache mount
 RUN --mount=type=cache,target=/data/.npm \
