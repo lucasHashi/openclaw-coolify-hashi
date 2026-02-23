@@ -26,14 +26,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     gnupg \
     ripgrep fd-find fzf bat \
-    pandoc \
-    poppler-utils \
-    ffmpeg \
-    imagemagick \
-    graphviz \
     sqlite3 \
     pass \
-    chromium \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -93,8 +87,7 @@ RUN mkdir -p /data/.bun && \
     bun --version
 
 # Python tools
-RUN pip3 install ipython csvkit openpyxl python-docx pypdf botasaurus browser-use playwright --break-system-packages && \
-    playwright install-deps
+RUN pip3 install ipython --break-system-packages
 
 # Configure QMD Persistence
 ENV XDG_CACHE_HOME="/data/.cache"
@@ -115,20 +108,20 @@ ENV BUN_INSTALL="/data/.bun" \
     PATH="/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin:/data/.bun/bin:/data/.bun/install/global/bin:$PATH"
 
 RUN if ! command -v bun >/dev/null 2>&1; then \
-      echo "bun not found in PATH. Installing bun binary..."; \
-      ARCH="$(uname -m)"; \
-      case "$ARCH" in \
-        x86_64|amd64) BUN_ARCH="x64" ;; \
-        aarch64|arm64) BUN_ARCH="aarch64" ;; \
-        *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
-      esac; \
-      curl -fsSL "https://github.com/oven-sh/bun/releases/latest/download/bun-linux-${BUN_ARCH}.zip" -o /tmp/bun.zip; \
-      apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*; \
-      unzip /tmp/bun.zip -d /tmp/bun; \
-      BUN_BIN="$(find /tmp/bun -type f -name bun -perm -111 | head -n 1)"; \
-      if [ -z "$BUN_BIN" ]; then echo "Could not locate bun binary in zip" && exit 1; fi; \
-      install -m 0755 "$BUN_BIN" /usr/local/bin/bun; \
-      rm -rf /tmp/bun /tmp/bun.zip; \
+    echo "bun not found in PATH. Installing bun binary..."; \
+    ARCH="$(uname -m)"; \
+    case "$ARCH" in \
+    x86_64|amd64) BUN_ARCH="x64" ;; \
+    aarch64|arm64) BUN_ARCH="aarch64" ;; \
+    *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
+    esac; \
+    curl -fsSL "https://github.com/oven-sh/bun/releases/latest/download/bun-linux-${BUN_ARCH}.zip" -o /tmp/bun.zip; \
+    apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*; \
+    unzip /tmp/bun.zip -d /tmp/bun; \
+    BUN_BIN="$(find /tmp/bun -type f -name bun -perm -111 | head -n 1)"; \
+    if [ -z "$BUN_BIN" ]; then echo "Could not locate bun binary in zip" && exit 1; fi; \
+    install -m 0755 "$BUN_BIN" /usr/local/bin/bun; \
+    rm -rf /tmp/bun /tmp/bun.zip; \
     fi
 
 # ✅ diagnóstico obrigatório (vai aparecer no log do Coolify)
@@ -138,11 +131,9 @@ RUN set -eux; \
     ls -la /data/.bun/bin/bun || true; \
     /usr/local/bin/bun --version
 
-# ✅ usa bun por caminho absoluto (mata o 127)
-RUN --mount=type=cache,target=/data/.bun/install/cache \
-    /usr/local/bin/bun install -g vercel @marp-team/marp-cli https://github.com/tobi/qmd && hash -r && \
-    /usr/local/bin/bun pm -g untrusted && \
-    /usr/local/bin/bun install -g @openai/codex @google/gemini-cli opencode-ai @steipete/summarize @hyperbrowser/agent clawhub
+# Instalando as utilidades globais essenciais (usando npm para maior estabilidade)
+RUN --mount=type=cache,target=/data/.npm \
+    npm install -g vercel @marp-team/marp-cli https://github.com/tobi/qmd clawhub
 
 # Install OpenClaw with npm cache mount
 RUN --mount=type=cache,target=/data/.npm \
@@ -158,10 +149,6 @@ RUN --mount=type=cache,target=/data/.npm \
     exit 1; \
     fi
 
-# AI Tool Suite & ClawHub
-RUN curl -fsSL https://claude.ai/install.sh | bash && \
-    curl -L https://code.kimi.com/install.sh | bash
-
 # Stage 5: Final application stage (changes frequently)
 FROM dependencies AS final
 
@@ -172,13 +159,11 @@ WORKDIR /app
 COPY . .
 
 # Specialized symlinks and permissions
-RUN ln -sf /data/.claude/bin/claude /usr/local/bin/claude 2>/dev/null || true && \
-    ln -sf /data/.kimi/bin/kimi /usr/local/bin/kimi 2>/dev/null || true && \
-    ln -sf /app/scripts/openclaw-approve.sh /usr/local/bin/openclaw-approve && \
+RUN ln -sf /app/scripts/openclaw-approve.sh /usr/local/bin/openclaw-approve && \
     chmod +x /app/scripts/*.sh /usr/local/bin/openclaw-approve
 
 # ✅ FINAL PATH (important)
-ENV PATH="/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin:/data/.local/bin:/data/.npm-global/bin:/data/.bun/bin:/data/.bun/install/global/bin:/data/.claude/bin:/data/.kimi/bin"
+ENV PATH="/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin:/data/.local/bin:/data/.npm-global/bin:/data/.bun/bin:/data/.bun/install/global/bin"
 
 EXPOSE 18789
 CMD ["bash", "/app/scripts/bootstrap.sh"]
